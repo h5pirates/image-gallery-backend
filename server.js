@@ -4,15 +4,21 @@ var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
+var mongoose = require('mongoose');
 
 var routes = require('./routes/index');
 var users = require('./routes/users');
+var dbConfig = require('./db/config');
 
 var app = express();
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
+
+// set up database connection
+mongoose.connect(dbConfig.url);
+dbConfig.setup();
 
 // set up port
 app.set('port', process.env.PORT || 3000);
