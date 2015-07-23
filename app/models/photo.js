@@ -4,10 +4,11 @@
 
 var mongoose = require('mongoose');
 
-var photoSchema = new mongoose.schema({
+var photoSchema = new mongoose.Schema({
     title : {type: String, require: true},
-    albumId : {type: mongoose.Schema.Types.ObjectId, ref: 'Album', required: true}
-    globalDisplayOrder : Number,
+    url : {type: String, require: true},
+    albumId : {type: mongoose.Schema.Types.ObjectId, ref: 'Album', required: true},
+    globalDisplayOrder : {type: Number, require: true},
     albumDisplayOrder : Number
 });
 

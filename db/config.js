@@ -1,6 +1,7 @@
 /*
  * db/config.js
  */
+var mongoose = require('mongoose');
 
 module.exports = function() {
     return {
