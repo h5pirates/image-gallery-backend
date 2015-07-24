@@ -2,23 +2,41 @@
  * app/controller/photoController.js
  */
 
+var fs = require('fs');
+
 module.exports = function(Album, Photo) {
+    var _serializePhoto = function(photo) {
+        if (photo) {
+            var photoData = {
+                id : photo._id,
+                title : photo.title,
+                url : photo.url,
+                mimeType : photo.mimeType,
+                albumId : photo.albumId,
+                globalDisplayOrder : photo.globalDisplayOrder,
+                albumDisplayOrder : photo.albumDisplayOrder
+            };
+            return photoData;
+        }
+    };
+
+    var _serializePhotos = function(photos) {
+        var result = [];
+        if (photos) {
+            for (var i = 0; i < photos.length; i++) {
+                var photoData = _serializePhoto(photos[i]);
+                if (photoData && photoData !== {}) {
+                    result.push(photoData);
+                }
+            }
+        }
+        return result;
+    };
+
     return {
         getAllPhotos : function(req, res) {
             Photo.find({}).sort({'globalDisplayOrder': 1}).exec(function(err, photos) {
-                var result = [];
-                if (photos) {
-                    for (var i = 0; i < photos; i++) {
-                        var photoData = {
-                            id: photos[i]._id,
-                            url: photos[i].url,
-                            albumId: photos[i].albumId,
-                            globalDisplayOrder: photos[i].globalDisplayOrder,
-                            albumDisplayOrder: photos[i].albumDisplayOrder
-                        };
-                        result.push(photoData);
-                    }
-                }
+                var result = _serializePhotos(photos);
                 res.json(result);
             });
         },
@@ -28,13 +46,7 @@ module.exports = function(Album, Photo) {
                 if (err || !photo) {
                     res.json({success: false});
                 } else {
-                    var photoData = {
-                        id : photo._id,
-                        url : photo.url,
-                        albumId : photo.albumId,
-                        globalDisplayOrder : photo.globalDisplayOrder,
-                        albumDisplayOrder : photo.albumDisplayOrder
-                    };
+                    var photoData = _serializePhoto(photos[i]);
                     res.json({
                         success : true,
                         data : photoData
@@ -44,27 +56,33 @@ module.exports = function(Album, Photo) {
         },
 
         createPhoto : function(req, res) {
-            var photo = new Photo();
-            photo.title = req.body.title;
-            photo.url = "fakeurl";
-            Photo.find({}, function(err, photos) {
-                photo.globalDisplayOrder = photos.length;
+            var newPhotos = [];
+            for (var i = 0; i < req.files.length; i++) {
+                var originalNameParts = req.files[i].originalname.split('.');
+                var newPhoto = {};
+                newPhoto.title = originalNameParts[0];
+                newPhoto.url = "/images/" + req.files[i].filename;
+                newPhoto.albumId = req.body.albumId;
+                newPhoto.mimeType = req.files[i].mimetype;
+                newPhotos.push(newPhoto);
+            }
 
-                photo.albumId = req.body.albumId;
+            Photo.find({}, function(err, photos) {
+                var photosTotal = photos.length;
                 Photo.find({albumId: req.body.albumId}, function(err, albumPhotos) {
-                    photo.albumDisplayOrder = albumPhotos.length;
-                    photo.save(function(err) {
-                        var photoData = {
-                            id : photo._id,
-                            url : photo.url,
-                            albumId : photo.albumId,
-                            globalDisplayOrder : photo.globalDisplayOrder,
-                            albumDisplayOrder : photo.albumDisplayOrder
-                        };
-                        res.json({
-                            success : true,
-                            data : photoData
-                        });
+                    var albumPhotosTotal = albumPhotos.length;
+                    for (var i = 0; i < newPhotos.length; i++) {
+                        newPhotos[i].globalDisplayOrder = photosTotal + i;
+                        newPhotos[i].albumDisplayOrder = albumPhotosTotal + i;
+                    }
+                    Photo.collection.insert(newPhotos, function(err, createdPhotos) {
+                        if (err) {
+                            console.log(err);
+                            res.json({success: false});
+                        } else {
+                            var result = _serializePhotos(createdPhotos);
+                            res.json(result);
+                        }
                     });
                 });
             });

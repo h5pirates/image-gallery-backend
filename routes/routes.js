@@ -1,5 +1,7 @@
 var express = require('express');
 var router = express.Router();
+var multer = require('multer');
+var upload = multer({ dest:'./public/images/' });
 
 module.exports = function(Album, Photo) {
   var albumController = require('../app/controller/albumController')(Album, Photo);
@@ -16,7 +18,7 @@ module.exports = function(Album, Photo) {
   // Photo APIs
   router.get('/photos', photoController.getAllPhotos);
   router.get('/photo/:id', photoController.getPhoto);
-  router.post('/photo', photoController.createPhoto);
+  router.post('/photo', upload.array('file', 10), photoController.createPhoto);
   router.put('/photo/:id/title', photoController.updatePhotoTitle);
   router.put('/photo/:id/album', photoController.updatePhotoAlbumId);
   router.put('/photo/:id/globalDisplayOrder', photoController.updatePhotoGlobalDisplayOrder);

@@ -5,10 +5,11 @@
 var mongoose = require('mongoose');
 
 var photoSchema = new mongoose.Schema({
-    title : {type: String, require: true},
+    title : String,
     url : {type: String, require: true},
     albumId : {type: mongoose.Schema.Types.ObjectId, ref: 'Album', required: true},
-    globalDisplayOrder : {type: Number, require: true},
+    mimeType : String,
+    globalDisplayOrder : Number,
     albumDisplayOrder : Number
 });
 
